@@ -61,7 +61,7 @@
             document.body.appendChild(__script);
         }
     };
-    Manager.prototype.getCORS = function () {
+    Manager.prototype.getCORS = function (conf) {
         var supportCORS = (function () {
             if (!('XMLHttpRequest' in window)) {
                 return false;
@@ -74,15 +74,20 @@
             }
             return null;
         })();
-        return function (type, url, data, callback) {
-            if (supportCORS) {
-                var xhr = new supportCORS;
-                xhr.open(type, url);
-                xhr.onload = function () {
-                    callback(xhr.responseText);
-                };
-                xhr.send(data);
-            }
+        return function (type, url, data, callback,conf) {
+            console.info('使用此方法必须服务器端配合.\n1:在响应头中加上Access-Control-Allow-Origin\n2:需要前端携带凭据的话,则后端必须加上Access-Control-Allow-Credentials:true\n3:' +
+                '如果需要自定义头信息则响应头必须加上Access-Control-Request-Headers和Access-Control-Allow-Headers\n详情请参考http://www.w3.org/TR/cors/');
+            var setings = {
+                headers: {},
+                withCredentials: false
+            };
+            var xhr = new supportCORS;
+            xhr.open(type, url);
+            xhr.onload = function () {
+                callback(xhr.responseText);
+            };
+            xhr.send(data);
+
         }
     };
     Manager.prototype.getFrame = function (type) {
