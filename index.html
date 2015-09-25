@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="xMan.js"></script>
+    <script>
+        window.onload = function () {
+            x.jsonp('http://localhost:3000/jsonp', {type: 'jsonp'}, 'cb', function (data) {
+                console.log('[LOG] type:jsonp,data: ' + JSON.stringify(data));
+            });
+
+            x.crossDomain('post', 'http://localhost:3000/cors', {type: 'cors'}, function (data) {
+                console.log('[LOG] type:cors,data: ' + JSON.stringify(data));
+            });
+
+            x.formRequest('post', 'http://localhost:3000/form', {type: 'form'}, function (data) {
+                console.log('[LOG] type:form,data: ' + JSON.stringify(data));
+            });
+
+            var outer = x.frame(window.frames[0]);
+            outer.on('triggerOuter', function (data) {
+                console.log('[LOG triggerOuter] type:frames,data: ' + JSON.stringify(data))
+            });
+            outer.on('Message', function (data) {
+                console.log('[LOG Message Outer] type:frames,data: ' + JSON.stringify(data))
+            });
+            setTimeout(function () {
+                outer.emit('triggerInner', {from: 'outer'});
+                outer.send('this msg from outer');
+            }, 500);
+        };
+    </script>
+</head>
+<body>
+<iframe src="http://localhost:3000/inner.html"></iframe>
+</body>
+</html>
