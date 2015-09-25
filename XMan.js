@@ -1,11 +1,11 @@
 /**
  * Created by zhangyatao on 15/9/21.
  */
-!function (base) {
+!function (entrance) {
     if ("object" == typeof exports && "undefined" != typeof module) {
-        module.exports = base();
+        module.exports = entrance();
     } else if ("function" == typeof define && define.amd) {
-        define([], base());
+        define([], entrance());
     } else {
         var f;
         if ("undefined" != typeof window) {
@@ -13,7 +13,7 @@
         } else {
             "undefined" != typeof global ? f = global : "undefined" != typeof self && (f = self)
         }
-        f.x = base()
+        f.x = entrance()
     }
 }(function () {
     "use strict";
@@ -26,38 +26,43 @@
      * iframe form
      */
 
-    var base = function () {
+    var Base = function () {
         this.manger = new Manager();
-        this.jsonp = this.manger.getJsonp();
-        this.cors = this.manger.getCORS();
-        this.frameOuter = this.manger.getFrameOuter();
-        this.frameInner = this.manger.getFrameInner();
-        this.framePost = this.manger.getFrameForm();
+        util.each(['Jsonp', 'CORS', 'Frame', 'FrameForm'], function (item) {
+            this[item] = this.manger['get' + item]();
+        }, this);
     };
 
     var Manager = function () {
-        this.type = {
-            Inner: 'inner',
-            Outer: 'outer'
-        };
-    };
-    Manager.prototype.getJsonp = function () {
-        var i = 0;
-        return function (url, data, key, callback) {
-            var funcName = 'cb' + i++;
-            var callbackName = 'window.x.' + funcName;
-
-            try {
-                window.x[funcName] = function (data) {
-                    callback(data);
-                }
-            } finally {
-                delete window.x[funcName];
-                __script && __script.parentNode.removeChild(__script);
+        this.obtainId = (function () {
+            var id = 0;
+            return function (str) {
+                return (str || 'obtainId_') + id++;
             }
+        })();
 
+        this.queue = {};
+    };
+
+    Manager.prototype.getJsonp = function () {
+        var that = this;
+        return function (url, data, key, callback) {
+            var funcName = 'cb' + that.obtainId();
+            var callbackName = 'window.x.' + funcName;
             var __script = document.createElement('script');
-            __script.src = url + (/\?/.test(url) ? '&' : '?') + util.encodeObject2URIString(data) + '&' + key + '=' + callbackName;
+            window.x[funcName] = function (data) {
+                try {
+                    callback(data);
+                } finally {
+                    delete window.x[funcName];
+                    __script && __script.parentNode.removeChild(__script);
+                }
+            };
+            var arr = [];
+            util.forIn(data, function (key, value) {
+                arr.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+            });
+            __script.src = util.hasSearch(url, arr.join('&') + '&' + key + '=' + callbackName);
             document.body.appendChild(__script);
         }
     };
@@ -74,56 +79,101 @@
             }
             return null;
         })();
-        return function (type, url, data, callback,conf) {
+        return function (type, url, data, callback, conf) {
             console.info('使用此方法必须服务器端配合.\n1:在响应头中加上Access-Control-Allow-Origin\n2:需要前端携带凭据的话,则后端必须加上Access-Control-Allow-Credentials:true\n3:' +
                 '如果需要自定义头信息则响应头必须加上Access-Control-Request-Headers和Access-Control-Allow-Headers\n详情请参考http://www.w3.org/TR/cors/');
-            var setings = {
-                headers: {},
-                withCredentials: false
-            };
+            if (!supportCORS) {
+                console.warn('[WRAN] 当前浏览器支持此功能,请常识其他方式进行跨域请求.')
+                return;
+            }
+            conf = conf || {};
             var xhr = new supportCORS;
+            util.forIn(conf.headers, function (key, value) {
+                xhr.setRequestHeader(key, value);
+            });
+            xhr.withCredentials = !!conf.withCredentials;
             xhr.open(type, url);
             xhr.onload = function () {
                 callback(xhr.responseText);
             };
             xhr.send(data);
-
         }
     };
-    Manager.prototype.getFrame = function (type) {
-        if (type === this.type.Inner) {
-            return this.getFrameInner()
-        } else {
-            return this.getFrameOuter();
+    Manager.prototype.getFrame = function () {
+        return function (target) {
+            return new frameHandle(target);
         }
     };
-    Manager.prototype.getFrameInner = function () {
-        return new frameHandle(window.top);
-    };
-    Manager.prototype.getFrameOuter = function () {
-        return new frameHandle(window.frames[0])
+    Manager.prototype.createIframe = function (frameName) {
+        var iframe, that = this;
+        try {
+            iframe = document.createElement('<iframe name="' + frameName + '">');
+        } catch (ex) {
+            iframe = document.createElement('iframe');
+        }
+        iframe.name = frameName;
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        iframe.onload = function () {
+            var cb = that.queue[iframe.name];
+            if (cb) {
+                try {
+                    cb(iframe.contentWindow.name);
+                } finally {
+                    iframe.parentNode.removeChild(iframe);
+                }
+            }
+        };
     };
     Manager.prototype.getFrameForm = function () {
-        return function () {
-        }
+        var form = null, that = this;
+        // enctyp [application/x-www-form-urlencoded] [multipart/form-data] [text/plain]
+        return function (type, url, data, callback, enctype) {
+            if (form === null) {
+                form = document.createElement('form');
+                document.body.appendChild(form);
+            }
+            var frameName = that.obtainId();
+            that.createIframe(frameName);
+            form.method = type;
+            form.enctype = enctype || 'application/x-www-form-urlencoded';
+            form.setAttribute('target', frameName);
+            form.action = url;
+            that.queue[frameName] = callback;
+            form.innerHTML = "";
+            util.forIn(data, function (key, value) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            });
+            form.submit();
+        };
     };
 
     var frameHandle = function (target) {
         this.target = target;
         this.frameHandle = getFrameHelper();
+        this.frameHandle.init();
     };
     frameHandle.prototype = {
-        addCallback: function (name, cb) {
-            this.frameHandle['on' + name] = function () {
-                cb();
+        on: function (name, cb) {
+            this.frameHandle['on' + name] = function (data) {
+                cb(data);
             };
         },
-        sendMessage: function (name, param, targetWindow) {
-            crossDomainOuter.postMessage({
+        send: function (message) {
+            var that = this;
+            that.frameHandle.postMessage(message, that.target);
+        },
+        emit: function (name, param) {
+            var that = this;
+            that.frameHandle.postMessage({
                 type: 'event',
                 eventName: name,
                 param: param || {}
-            }, targetWindow || this.target);
+            }, that.target);
         },
         fire: function (name, params) {
             this.frameHandle.dispatchEvent(name, params);
@@ -135,10 +185,7 @@
             supportPostMessage: (function () {
                 if (window.postMessage) {
                     try {
-                        if (window.postMessage.toString().indexOf('[native code]') >= 0) {
-                            return true;
-                        }
-                        return false;
+                        return window.postMessage.toString().indexOf('[native code]') >= 0;
                     } catch (e) {
                         return true;
                     }
@@ -244,6 +291,11 @@
         }
     })();
 
+    var isType = function (type) {
+        return function (obj) {
+            return Object.prototype.toString.call(obj) === '[object ' + type + ']';
+        };
+    };
 
     var util = {
         encodeObject2URIString: function (obj) {
@@ -307,8 +359,173 @@
             } else {
                 return data;
             }
+        },
+        // 绑定函数中的this关键字
+        bind: function (func, context) {
+            if (Function.prototype.bind) {
+                return func.bind(context);
+            }
+            return function () {
+                func.apply(context, arguments);
+            }
+        },
+        hasSearch: function (str, data) {
+            var symbol = '';
+            if (/\?/.test(str)) {
+                symbol = '&';
+            } else {
+                symbol = '?'
+            }
+            return str + symbol + data;
+        },
+        /**
+         * obj [object] 需要遍历的那个对象
+         * callback [function] 回调函数
+         * */
+        forIn: function (obj, callback) {
+            if (!util.isObject(obj)) {
+                return;
+            }
+            for (var n in obj) {
+                if (!obj.hasOwnProperty(n)) continue;
+                callback.call(null, n, obj[n]);
+            }
+        },
+        //遍历  不管对象还是数组都可以遍历
+        /***
+         * iteraler [object|array] 需要进行遍历的参数
+         */
+        iteral: function (iteraler, callback) {
+            if (util.isArray(iteraler)) {
+                return util.each.apply(null, [iteraler, callback])
+            }
+            if (util.isObject(iteraler)) {
+                return util.forIn.apply(null, arguments);
+            }
+        },
+        each: (function () {
+            if ([].forEach) {
+                /**
+                 * list [array] 要遍历的集合
+                 * callback [function] 回调函数
+                 * */
+                return function (list) {
+                    [].forEach.apply(list, [].slice.call(arguments, 1));
+                }
+            }
+            return function (list, callback) {
+                for (var i = 0, len = list.length; i < len; i++) {
+                    callback.call(arguments[2], list[i], i, list);
+                }
+            }
+        })(),
+        init: function () {
+            util.each(['Object', 'String', 'Function', 'Array'], function (item) {
+                util['is' + item] = isType(item);
+            })
         }
     };
 
-    return new base();
+    util.init();
+
+    var verify = function (obj) {
+        if (!this instanceof  verify) {
+            return new verify(obj)
+        }
+        this.data = obj;
+        this.queue = [];
+    };
+    verify.prototype.pushVerify = function () {
+        [].push.apply(this.queue, arguments);
+        return this;
+    };
+    verify.prototype.start = function () {
+        var that = this;
+        util.each(this.queue, function (item) {
+            if (!item.verify.call(that.data)) {
+                throw new Error('[VERIFY LOG] name: ' + item.name + '; ' + item.errorMsg || '验证出现错误,缺少失败原因');
+            }
+        });
+    };
+
+    var baseInstance = new Base();
+
+    var entrance = function (conf) {
+        if (!util.isObject(conf))
+            return;
+        var DefaultSettions = {
+            method: 'get',
+            type: 'jsonp',
+            data: {},
+            success: function () {
+            },
+            error: function () {
+            },
+            url: '',
+            'contentType': 'application/x-www-form-urlencoded',
+            jsonpCallback: 'cb',
+            withCredentials: false,
+            headers: {},
+            targetWindow: window.frames[0] || window.top,
+            cache: false
+        };
+        util.forIn(DefaultSettions, function (key) {
+            DefaultSettions[key] = conf[key] || DefaultSettions[key];
+        });
+        verify(DefaultSettions).pushVerify({
+            name: '验证type',
+            verify: function () {
+                if (/^(get|post)$/igm.test(this.method)) {
+                    if (this.method == 'post') {
+                        return !/^(jsonp|frame)$/.test(this.type)
+                    }
+                    return true;
+                }
+            },
+            errorMsg: '[ERROR:如使用post方法则不能使用以下方式进行跨域请求"jsonp,frame"]'
+        }, {
+            name: '验证method',
+            verify: function () {
+                return /^(jsonp|crossDomain|frame|formRequest)$/igm.test(this.method);
+            },
+            errorMsg: '[ERROR:只能使用以下方法方式进行跨域请求"jsonp,crossDoamin,frame,formRequest"]'
+        }, {
+            name: '验证url',
+            verify: function () {
+                if (this.method == 'get' && /(jsonp|crossDomain|formRequest)/.test(this.type)) {
+                    this.url = util.hasSearch(this.url, util.encodeObject2URIString(this.data));
+                    this.data = void 0;
+                }
+                return true;
+            }
+        }).start();
+
+
+        switch (DefaultSettions.type) {
+            case 'jsonp':
+                return baseInstance['jsonp'](DefaultSettions.url, DefaultSettions.jsonpCallback, DefaultSettions.success);
+            case 'crossDomain':
+                return baseInstance['crossDomain'](DefaultSettions.type, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, {
+                    headers: DefaultSettions.headers,
+                    withCredentials: DefaultSettions.withCredentials
+                });
+            case  'frame':
+                return baseInstance['Frame'](DefaultSettions.targetWindow);
+            case  'formRequest':
+                return baseInstance['FrameForm'](DefaultSettions.type, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, DefaultSettions.contentType);
+        }
+    };
+
+    util.forIn({
+        jsonp: 'Jsonp',
+        crossDomain: 'CORS',
+        frame: 'Frame',
+        formRequest: 'FrameForm'
+    }, function (key, value) {
+        entrance[key] = function () {
+            return baseInstance[value].apply(null, arguments);
+        }
+    });
+
+    return entrance;
 });

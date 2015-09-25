@@ -12,7 +12,7 @@ xMan
 ### xMan的引入
 ```html
 
-  <script type="text/javascript" src="./xMan.js"></script>
+  <script type="text/javascript" src="./XMan.js"></script>
     
 ```
 ### xMan如何向外暴露(兼容AMD和CMD)
