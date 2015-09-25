@@ -83,16 +83,16 @@
             console.info('使用此方法必须服务器端配合.\n1:在响应头中加上Access-Control-Allow-Origin\n2:需要前端携带凭据的话,则后端必须加上Access-Control-Allow-Credentials:true\n3:' +
                 '如果需要自定义头信息则响应头必须加上Access-Control-Request-Headers和Access-Control-Allow-Headers\n详情请参考http://www.w3.org/TR/cors/');
             if (!supportCORS) {
-                console.warn('[WRAN] 当前浏览器支持此功能,请常识其他方式进行跨域请求.')
+                console.warn('[WARN] 当前浏览器支持此功能,请常识其他方式进行跨域请求.');
                 return;
             }
             conf = conf || {};
             var xhr = new supportCORS;
+            xhr.open(type, url);
             util.forIn(conf.headers, function (key, value) {
                 xhr.setRequestHeader(key, value);
             });
             xhr.withCredentials = !!conf.withCredentials;
-            xhr.open(type, url);
             xhr.onload = function () {
                 callback(xhr.responseText);
             };
@@ -127,7 +127,7 @@
     };
     Manager.prototype.getFrameForm = function () {
         var form = null, that = this;
-        // enctyp [application/x-www-form-urlencoded] [multipart/form-data] [text/plain]
+        // enctype [application/x-www-form-urlencoded] [multipart/form-data] [text/plain]
         return function (type, url, data, callback, enctype) {
             if (form === null) {
                 form = document.createElement('form');
@@ -304,7 +304,7 @@
             }
             var arr = [];
             for (var n in obj) {
-                if (!obj.hasOwnPropertyn(n) || typeof obj[n] === 'function') {
+                if (!obj.hasOwnProperty(n) || typeof obj[n] === 'function') {
                     continue;
                 }
                 arr.push(encodeURIComponent(n) + '=' + encodeURIComponent(obj[n]));
@@ -429,7 +429,7 @@
     util.init();
 
     var verify = function (obj) {
-        if (!this instanceof  verify) {
+        if (!(this instanceof  verify)) {
             return new verify(obj)
         }
         this.data = obj;
@@ -459,11 +459,9 @@
             data: {},
             success: function () {
             },
-            error: function () {
-            },
             url: '',
-            'contentType': 'application/x-www-form-urlencoded',
-            jsonpCallback: 'cb',
+            contentType: 'application/x-www-form-urlencoded',
+            callbackName: 'cb',
             withCredentials: false,
             headers: {},
             targetWindow: window.frames[0] || window.top,
@@ -473,7 +471,7 @@
             DefaultSettions[key] = conf[key] || DefaultSettions[key];
         });
         verify(DefaultSettions).pushVerify({
-            name: '验证type',
+            name: '验证method',
             verify: function () {
                 if (/^(get|post)$/igm.test(this.method)) {
                     if (this.method == 'post') {
@@ -484,9 +482,9 @@
             },
             errorMsg: '[ERROR:如使用post方法则不能使用以下方式进行跨域请求"jsonp,frame"]'
         }, {
-            name: '验证method',
+            name: '验证type',
             verify: function () {
-                return /^(jsonp|crossDomain|frame|formRequest)$/igm.test(this.method);
+                return /^(jsonp|crossDomain|frame|formRequest)$/igm.test(this.type);
             },
             errorMsg: '[ERROR:只能使用以下方法方式进行跨域请求"jsonp,crossDoamin,frame,formRequest"]'
         }, {
@@ -498,21 +496,29 @@
                 }
                 return true;
             }
+        }, {
+            name: '验证cache',
+            verify: function () {
+                if (this.cache === false) {
+                    this.url = util.hasSearch(this.url, '_=' + (Math.random() * 0xffffff | 0));
+                }
+                return true;
+            }
         }).start();
 
 
         switch (DefaultSettions.type) {
             case 'jsonp':
-                return baseInstance['jsonp'](DefaultSettions.url, DefaultSettions.jsonpCallback, DefaultSettions.success);
+                return baseInstance['Jsonp'](DefaultSettions.url, DefaultSettions.data, DefaultSettions.callbackName, DefaultSettions.success);
             case 'crossDomain':
-                return baseInstance['crossDomain'](DefaultSettions.type, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, {
+                return baseInstance['CORS'](DefaultSettions.method, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, {
                     headers: DefaultSettions.headers,
                     withCredentials: DefaultSettions.withCredentials
                 });
             case  'frame':
                 return baseInstance['Frame'](DefaultSettions.targetWindow);
             case  'formRequest':
-                return baseInstance['FrameForm'](DefaultSettions.type, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, DefaultSettions.contentType);
+                return baseInstance['FrameForm'](DefaultSettions.method, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, DefaultSettions.contentType);
         }
     };
 

@@ -6,18 +6,59 @@
     <script src="XMan.js"></script>
     <script>
         window.onload = function () {
+            // 当前页面是http://localhost:63342
+            // jsonp用法一
             x.jsonp('http://localhost:3000/jsonp', {type: 'jsonp'}, 'cb', function (data) {
-                console.log('[LOG] type:jsonp,data: ' + JSON.stringify(data));
+                console.log('[LOG] type:jsonp1,data: ' + JSON.stringify(data));
             });
 
+            // jsonp用法二
+            x({
+                method: 'get',
+                url: 'http://localhost:3000/jsonp',
+                type: 'jsonp',
+                data: {type: 'jsonp'},
+                callbackName: 'cb',
+                success: function (data) {
+                    console.log('[LOG] type:jsonp2,data: ' + JSON.stringify(data));
+                }
+            });
+
+            // 跨域资源共享用法一
             x.crossDomain('post', 'http://localhost:3000/cors', {type: 'cors'}, function (data) {
-                console.log('[LOG] type:cors,data: ' + JSON.stringify(data));
+                console.log('[LOG] type:cors1,data: ' + JSON.stringify(data));
             });
 
+            // 跨域资源共享用法二
+            x({
+                method: 'post',
+                type: 'crossDomain',
+                url: 'http://localhost:3000/cors',
+                data: {type: 'cors'},
+                success: function (data) {
+                    console.log('[LOG] type:cors2,data: ' + JSON.stringify(data));
+                },
+                withCredentials: true,
+                headers: {'mySelf': 'byMyself'}
+            });
+
+            // form request用法一
             x.formRequest('post', 'http://localhost:3000/form', {type: 'form'}, function (data) {
-                console.log('[LOG] type:form,data: ' + JSON.stringify(data));
+                console.log('[LOG] type:form1,data: ' + JSON.stringify(data));
             });
 
+            // form request用法二
+            x({
+                method: 'post',
+                type: 'formRequest',
+                url: 'http://localhost:3000/form',
+                data: {type: 'form'},
+                success: function (data) {
+                    console.log('[LOG] type:form2,data: ' + JSON.stringify(data));
+                }
+            });
+
+            // iframe 跨域 通讯 用法一
             var outer = x.frame(window.frames[0]);
             outer.on('triggerOuter', function (data) {
                 console.log('[LOG triggerOuter] type:frames,data: ' + JSON.stringify(data))
@@ -29,6 +70,23 @@
                 outer.emit('triggerInner', {from: 'outer'});
                 outer.send('this msg from outer');
             }, 500);
+
+            // iframe 跨域 通讯 用法二
+            var outer2 = x({
+                method: 'get',
+                type: 'frame',
+                targetWindow: window.frames[0]
+            });
+            outer2.on('triggerOuter', function (data) {
+                console.log('[LOG triggerOuter2] type:frames,data: ' + JSON.stringify(data))
+            });
+            outer2.on('Message', function (data) {
+                console.log('[LOG Message Outer2] type:frames,data: ' + JSON.stringify(data))
+            });
+            setTimeout(function () {
+                outer2.emit('triggerInner', {from: 'outer2'});
+                outer2.send('this msg from outer2');
+            }, 600);
         };
     </script>
 </head>

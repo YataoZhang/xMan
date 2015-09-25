@@ -27,7 +27,8 @@ var server = http.createServer(function (request, response) {
         return;
     }
     if (pathname === '/cors') {
-        response.writeHead(200, {'Access-Control-Allow-Origin': '*'});
+        response.writeHead(200, {'Access-Control-Allow-Origin': 'http://localhost:63342',
+            'Access-Control-Allow-Credentials': 'true'});
         response.end('this is cors demo');
         return;
     }
