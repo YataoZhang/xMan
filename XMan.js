@@ -506,7 +506,6 @@
             }
         }).start();
 
-
         switch (DefaultSettions.type) {
             case 'jsonp':
                 return baseInstance['Jsonp'](DefaultSettions.url, DefaultSettions.data, DefaultSettions.callbackName, DefaultSettions.success);
@@ -533,5 +532,6 @@
         }
     });
 
+    entrance.version = '0.9.0';
     return entrance;
 });
