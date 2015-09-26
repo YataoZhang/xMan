@@ -15,6 +15,7 @@ var formPost = function (content, response, cookie) {
     response.end('<html><head><script>window.name=' + JSON.stringify(content) + ';location.href="about:blank";</script></head><body></body></html>');
 };
 var server = http.createServer(function (request, response) {
+    "use strict";
     var urlobj = url.parse(request.url, true);
     var pathname = urlobj.pathname;
     if (pathname === '/form') {
@@ -62,5 +63,6 @@ var server = http.createServer(function (request, response) {
     });
 });
 server.listen(PORT, function () {
-    console.log('start over')
+    "use strict";
+    console.log('start over');
 });
