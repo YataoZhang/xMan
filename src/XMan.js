@@ -59,11 +59,11 @@
                     __script.parentNode.removeChild(__script);
                 }
             };
-            var arr = [];
+            var arr = '';
             util.forIn(data, function (key, value) {
-                arr.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+                arr += encodeURIComponent(key) + '=' + encodeURIComponent(value) + '&';
             });
-            __script.src = util.hasSearch(url, arr.join('&') + '&' + key + '=' + callbackName);
+            __script.src = util.hasSearch(url, arr + key + '=' + callbackName);
             document.body.appendChild(__script);
         };
     };
@@ -122,6 +122,7 @@
                     cb(iframe.contentWindow.name);
                 } finally {
                     iframe.parentNode.removeChild(iframe);
+                    delete that.queue[iframe.name];
                 }
             }
         };
