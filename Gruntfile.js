@@ -1,19 +1,23 @@
-module.exports = function (grunt) {
-    // 项目配置
+module.exports = function(grunt) {
+
+    // Project configuration.
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
         uglify: {
             options: {
-                banner: '/*! XMan.js <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+                banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
             },
             build: {
-                src: 'XMan.js',
-                dest: 'dest/XMan.js.min.js'
+                src: 'src/<%= pkg.name %>.js',
+                dest: 'dest/<%= pkg.name %>.min.js'
             }
         }
     });
-    // 加载提供"uglify"任务的插件
+
+    // 加载包含 "uglify" 任务的插件。
     grunt.loadNpmTasks('grunt-contrib-uglify');
-    // 默认任务
+
+    // 默认被执行的任务列表。
     grunt.registerTask('default', ['uglify']);
+
 };

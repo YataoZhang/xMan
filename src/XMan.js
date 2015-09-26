@@ -2,18 +2,17 @@
  * Created by zhangyatao on 15/9/21.
  */
 !function (entrance) {
-    if ("object" == typeof exports && "undefined" != typeof module) {
+    "use strict";
+    if ("object" === typeof exports && "undefined" !== typeof module) {
         module.exports = entrance();
-    } else if ("function" == typeof define && define.amd) {
+    } else if ("function" === typeof define && define.amd) {
         define([], entrance());
     } else {
         var f;
-        if ("undefined" != typeof window) {
-            f = window
-        } else {
-            "undefined" != typeof global ? f = global : "undefined" != typeof self && (f = self)
+        if ("undefined" !== typeof window) {
+            f = window;
         }
-        f.x = entrance()
+        f.x = entrance();
     }
 }(function () {
     "use strict";
@@ -26,6 +25,8 @@
      * iframe form
      */
 
+    var console = window.console || {log: function () {
+    }};
     var Base = function () {
         this.manger = new Manager();
         util.each(['Jsonp', 'CORS', 'Frame', 'FrameForm'], function (item) {
@@ -38,7 +39,7 @@
             var id = 0;
             return function (str) {
                 return (str || 'obtainId_') + id++;
-            }
+            };
         })();
 
         this.queue = {};
@@ -55,7 +56,7 @@
                     callback(data);
                 } finally {
                     delete window.x[funcName];
-                    __script && __script.parentNode.removeChild(__script);
+                    __script.parentNode.removeChild(__script);
                 }
             };
             var arr = [];
@@ -64,18 +65,18 @@
             });
             __script.src = util.hasSearch(url, arr.join('&') + '&' + key + '=' + callbackName);
             document.body.appendChild(__script);
-        }
+        };
     };
     Manager.prototype.getCORS = function (conf) {
         var supportCORS = (function () {
             if (!('XMLHttpRequest' in window)) {
                 return false;
             }
-            if ('withCredentials' in new XMLHttpRequest) {
+            if ('withCredentials' in new XMLHttpRequest()) {
                 return XMLHttpRequest;
             }
             if ('XDomainRequest' in window) {
-                return XDomainRequest;
+                return window.XDomainRequest;
             }
             return null;
         })();
@@ -87,7 +88,7 @@
                 return;
             }
             conf = conf || {};
-            var xhr = new supportCORS;
+            var xhr = new supportCORS();
             xhr.open(type, url);
             util.forIn(conf.headers, function (key, value) {
                 xhr.setRequestHeader(key, value);
@@ -97,12 +98,12 @@
                 callback(xhr.responseText);
             };
             xhr.send(data);
-        }
+        };
     };
     Manager.prototype.getFrame = function () {
         return function (target) {
             return new frameHandle(target);
-        }
+        };
     };
     Manager.prototype.createIframe = function (frameName) {
         var iframe, that = this;
@@ -287,8 +288,8 @@
                         }, 100);
                     }
                 }
-            }
-        }
+            };
+        };
     })();
 
     var isType = function (type) {
@@ -299,7 +300,7 @@
 
     var util = {
         encodeObject2URIString: function (obj) {
-            if (typeof obj == 'string') {
+            if (typeof obj === 'string') {
                 return obj;
             }
             var arr = [];
@@ -314,7 +315,7 @@
         stringify: function (obj) {
             var t = typeof obj;
             var callee = this.stringify;
-            if (t !== 'object' || obj == null) {
+            if (t !== 'object' || obj === null) {
                 if (t === 'string') {
                     obj = '"' + obj + '"';
                 }
@@ -327,13 +328,13 @@
                 var json = [];
                 var arr = obj && obj.constructor === Array;
                 for (var n in obj) {
-                    v = obj[n];
-                    t = typeof v;
                     if (obj.hasOwnProperty(n)) {
+                        v = obj[n];
+                        t = typeof v;
                         if (t === 'string') {
                             v = '"' + v + '"';
                         }
-                        else if (t === 'object' && v != null) {
+                        else if (t === 'object' && v !== null) {
                             v = callee(v);
                         }
                         json.push((arr ? '' : '"' + n + '":') + String(v));
@@ -367,14 +368,14 @@
             }
             return function () {
                 func.apply(context, arguments);
-            }
+            };
         },
         hasSearch: function (str, data) {
             var symbol = '';
             if (/\?/.test(str)) {
                 symbol = '&';
             } else {
-                symbol = '?'
+                symbol = '?';
             }
             return str + symbol + data;
         },
@@ -387,8 +388,9 @@
                 return;
             }
             for (var n in obj) {
-                if (!obj.hasOwnProperty(n)) continue;
-                callback.call(null, n, obj[n]);
+                if (obj.hasOwnProperty(n)) {
+                    callback.call(null, n, obj[n]);
+                }
             }
         },
         //遍历  不管对象还是数组都可以遍历
@@ -411,18 +413,18 @@
                  * */
                 return function (list) {
                     [].forEach.apply(list, [].slice.call(arguments, 1));
-                }
+                };
             }
             return function (list, callback) {
                 for (var i = 0, len = list.length; i < len; i++) {
                     callback.call(arguments[2], list[i], i, list);
                 }
-            }
+            };
         })(),
         init: function () {
             util.each(['Object', 'String', 'Function', 'Array'], function (item) {
                 util['is' + item] = isType(item);
-            })
+            });
         }
     };
 
@@ -430,7 +432,7 @@
 
     var verify = function (obj) {
         if (!(this instanceof  verify)) {
-            return new verify(obj)
+            return new verify(obj);
         }
         this.data = obj;
         this.queue = [];
@@ -474,8 +476,8 @@
             name: '验证method',
             verify: function () {
                 if (/^(get|post)$/igm.test(this.method)) {
-                    if (this.method == 'post') {
-                        return !/^(jsonp|frame)$/.test(this.type)
+                    if (this.method === 'post') {
+                        return !/^(jsonp|frame)$/.test(this.type);
                     }
                     return true;
                 }
@@ -490,7 +492,7 @@
         }, {
             name: '验证url',
             verify: function () {
-                if (this.method == 'get' && /(jsonp|crossDomain|formRequest)/.test(this.type)) {
+                if (this.method === 'get' && /(jsonp|crossDomain|formRequest)/.test(this.type)) {
                     this.url = util.hasSearch(this.url, util.encodeObject2URIString(this.data));
                     this.data = void 0;
                 }
@@ -500,7 +502,7 @@
             name: '验证cache',
             verify: function () {
                 if (this.cache === false) {
-                    this.url = util.hasSearch(this.url, '_=' + (Math.random() * 0xffffff | 0));
+                    this.url = util.hasSearch(this.url, '_=' + parseInt(Math.random() * 0xffffff, 10));
                 }
                 return true;
             }
@@ -508,16 +510,16 @@
 
         switch (DefaultSettions.type) {
             case 'jsonp':
-                return baseInstance['Jsonp'](DefaultSettions.url, DefaultSettions.data, DefaultSettions.callbackName, DefaultSettions.success);
+                return baseInstance.Jsonp(DefaultSettions.url, DefaultSettions.data, DefaultSettions.callbackName, DefaultSettions.success);
             case 'crossDomain':
-                return baseInstance['CORS'](DefaultSettions.method, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, {
+                return baseInstance.CORS(DefaultSettions.method, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, {
                     headers: DefaultSettions.headers,
                     withCredentials: DefaultSettions.withCredentials
                 });
             case  'frame':
-                return baseInstance['Frame'](DefaultSettions.targetWindow);
+                return baseInstance.Frame(DefaultSettions.targetWindow);
             case  'formRequest':
-                return baseInstance['FrameForm'](DefaultSettions.method, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, DefaultSettions.contentType);
+                return baseInstance.FrameForm(DefaultSettions.method, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, DefaultSettions.contentType);
         }
     };
 
@@ -529,7 +531,7 @@
     }, function (key, value) {
         entrance[key] = function () {
             return baseInstance[value].apply(null, arguments);
-        }
+        };
     });
 
     entrance.version = '0.9.0';
