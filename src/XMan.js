@@ -11,7 +11,7 @@
         var f;
         if ("undefined" !== typeof window) {
             f = window;
-        }else{
+        } else {
             throw new Error('wrong execution environment');
         }
         f.x = entrance();
@@ -27,15 +27,18 @@
      * iframe form
      */
 
-    var console = window.console || {log: function () {
-    }};
+    var console = window.console || {
+            log: function () {
+            },
+            warn: function () {
+            }
+        };
     var Base = function () {
         this.manger = new Manager();
         util.each(['Jsonp', 'CORS', 'Frame', 'FrameForm'], function (item) {
             this[item] = this.manger['get' + item]();
         }, this);
     };
-
     var Manager = function () {
         this.obtainId = (function () {
             var id = 0;
@@ -43,10 +46,8 @@
                 return (str || 'obtainId_') + id++;
             };
         })();
-
         this.queue = {};
     };
-
     Manager.prototype.getJsonp = function () {
         var that = this;
         return function (url, data, key, callback) {
@@ -62,9 +63,10 @@
                 }
             };
             var arr = '';
-            util.forIn(data, function (key, value) {
-                arr += encodeURIComponent(key) + '=' + encodeURIComponent(value) + '&';
-            });
+            if (util.isObject(data)) {
+                arr = util.encodeObject2URIString(data);
+            }
+            arr += arr.length > 0 ? '&' : '';
             __script.src = util.hasSearch(url, arr + key + '=' + callbackName);
             document.body.appendChild(__script);
         };
@@ -88,6 +90,13 @@
             if (!supportCORS) {
                 console.warn('[WARN] 当前浏览器支持此功能,请常识其他方式进行跨域请求.');
                 return;
+            }
+            if (util.isPureObject(data)) {
+                data = util.encodeObject2URIString(data);
+            }
+            if (String(type).toLowerCase() === 'get' && util.isString(data) && data.length > 0) {
+                url = util.hasSearch(url, data);
+                data = void 0;
             }
             conf = conf || {};
             var xhr = new supportCORS();
@@ -155,7 +164,6 @@
             form.submit();
         };
     };
-
     var frameHandle = function (target) {
         this.target = target;
         this.frameHandle = getFrameHelper();
@@ -294,13 +302,11 @@
             };
         };
     })();
-
     var isType = function (type) {
         return function (obj) {
             return Object.prototype.toString.call(obj) === '[object ' + type + ']';
         };
     };
-
     var util = {
         encodeObject2URIString: function (obj) {
             if (typeof obj === 'string') {
@@ -428,11 +434,12 @@
             util.each(['Object', 'String', 'Function', 'Array'], function (item) {
                 util['is' + item] = isType(item);
             });
+        },
+        isPureObject: function (data) {
+            return !!(util.isObject(data) && data.constructor === Object);
         }
     };
-
     util.init();
-
     var verify = function (obj) {
         if (!(this instanceof  verify)) {
             return new verify(obj);
@@ -452,9 +459,7 @@
             }
         });
     };
-
     var baseInstance = new Base();
-
     var entrance = function (conf) {
         if (!util.isObject(conf))
             return;
@@ -510,7 +515,6 @@
                 return true;
             }
         }).start();
-
         switch (DefaultSettions.type) {
             case 'jsonp':
                 return baseInstance.Jsonp(DefaultSettions.url, DefaultSettions.data, DefaultSettions.callbackName, DefaultSettions.success);
@@ -525,7 +529,6 @@
                 return baseInstance.FrameForm(DefaultSettions.method, DefaultSettions.url, DefaultSettions.data, DefaultSettions.success, DefaultSettions.contentType);
         }
     };
-
     util.forIn({
         jsonp: 'Jsonp',
         crossDomain: 'CORS',
@@ -536,7 +539,6 @@
             return baseInstance[value].apply(null, arguments);
         };
     });
-
     entrance.version = '0.9.0';
     return entrance;
 });
