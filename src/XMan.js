@@ -11,6 +11,8 @@
         var f;
         if ("undefined" !== typeof window) {
             f = window;
+        }else{
+            throw new Error('wrong execution environment');
         }
         f.x = entrance();
     }
@@ -400,7 +402,7 @@
          */
         iteral: function (iteraler, callback) {
             if (util.isArray(iteraler)) {
-                return util.each.apply(null, [iteraler, callback])
+                return util.each.apply(null, [iteraler, callback]);
             }
             if (util.isObject(iteraler)) {
                 return util.forIn.apply(null, arguments);
