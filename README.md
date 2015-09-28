@@ -181,11 +181,11 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 2: 此方法可以默认为携带cookie<br/>
 3: 此方法的兼容性为IE6+以及所有主流浏览器.<br/>
 
-#### 4) frame(targetWindwo);
+#### 4) frame(targetWindow);
 跨iframe交互使用，此方法返回的是一个frameHandle对象
 
 `参数列表:`
->+ @param targetWindwo   {window}  目标窗口对象
+>+ @param targetWindow   {window}  目标窗口对象
 
 `示例用法:`
 
