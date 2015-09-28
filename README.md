@@ -229,25 +229,29 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 frameHandle对象为x.frame(param...); 方法的返回值。操作ifarme之间的消息通讯必须通过此对象才可实现。<br/>
 *frameHandle对象只有4个实例方法，没有静态方法。*
 
-###### on(eventName,callback);
+###### on(eventName, callback);
 注册回调事件，以供目标window对象调用。
+
 `参数列表:`
 >+ @param eventName      {string} 方法名称
 >+ @param callback     {function} 回调函数
 
-###### emit(eventName,param);
+###### emit(eventName, param);
 触发对方的回调事件。
+
 `参数列表:`
 >+ @param eventName      {string} 需要触发的方法名称
 >+ @param param     {object|string} 参数
 
 ###### send(message);
 向对方发送消息。对方必须通过on方法注册`Message`事件才可收到通过此方法发送的消息。
+
 `参数列表:`
 >+ @param message      {string} 消息内容
 
-###### fire(eventName,[param1,param2...]]);
+###### fire(eventName, [param1,param2...]]);
 触发本窗口注册的事件。
+
 `参数列表:`
 >+ @param eventName      {string} 方法名称
 >+ @param [param1,param2...]]     {array} 参数列表
