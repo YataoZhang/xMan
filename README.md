@@ -21,6 +21,7 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 
 ```js
 
+// 以下为判断逻辑。需要更改的话，请下载之后在此处修改依附逻辑。
   if ("object" == typeof exports && "undefined" != typeof module) {
       module.exports = entrance();
   } else if ("function" == typeof define && define.amd) {
@@ -74,6 +75,7 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 ```
 
 ### xMan都有哪些方法
+*xMan提供4种请求类型的方法，其中包括`jsonp`、`corssDoamin`、`formrequest`以及`frame`。其中前三种是用于前端与后端进行跨域交互时使用。最后一种frame则是在不同域名的frame窗口之间交互时使用，与服务器不做任何交互，仅仅只是前端不同域名的iframe之间使用。*
 
 #### 1) jsonp(url, data, jsonpName, callback);
 此方法提供是jsonp功能.
@@ -179,10 +181,81 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 2: 此方法可以默认为携带cookie<br/>
 3: 此方法的兼容性为IE6+以及所有主流浏览器.<br/>
 
-## 此解决方案支持跨域get和post方法。
-#### 提供四种方法，模仿jQuery，简单可依赖。
+#### 4) frame(targetWindwo);
+跨iframe交互使用，此方法返回的是一个frameHandle对象
 
->+   jsonp  (仅支持get方法)  市面上浏览器都支持
->+   iframe  (window.name|[on/post]message)  仅支持get方法 市面上浏览器都支持
->+   cors  (支持get 和 post方法)  仅支持ie8+以及高级浏览器
->+   form  iframe (支持get方法和post方法)  市面上浏览器都支持
+`参数列表:`
+>+ @param targetWindwo   {window}  目标窗口对象
+
+`示例用法:`
+
+```js
+
+ // 外部窗口代码，假设外部窗口的URI为 http://localhost:63342
+  var outer = x.frame(window.frames[0]);
+  outer.on('triggerOuter', function (data) {
+      console.log('[LOG triggerOuter] type:frames,data: ' + JSON.stringify(data))
+  });
+  //⚠注意：Message事件为内置事件，接受对方通过send方法发过来的消息对象必须通过注册该事件才可收到。
+  outer.on('Message', function (data) {
+      console.log('[LOG Message Outer] type:frames,data: ' + JSON.stringify(data))
+  });
+  setTimeout(function () {
+      outer.emit('triggerInner', {from: 'outer'});
+      outer.send('this msg from outer');
+  }, 500);
+ 
+ // 内部窗口代码，假设内部窗口的URI为 http://localhost:3000
+   var inner = x.frame(window.parent);
+  inner.on('triggerInner', function (data) {
+      console.log('[LOG triggerInner] type:frames,data: ' + JSON.stringify(data))
+  });
+  //⚠注意：Message事件为内置事件，接受对方通过send方法发过来的消息对象必须通过注册该事件才可收到。
+  inner.on('Message',function(data){
+      console.log('[LOG Message Inner] type:frames,data: ' + JSON.stringify(data))
+  });
+
+  setTimeout(function(){
+      inner.emit('triggerOuter', {from: 'inner'});
+      inner.send('this msg from inner');
+  },1000);
+ 
+```
+
+`注意:`<br/>
+1: 此方法仅用于不同域名iframe之间交互使用，不会与服务器进行任何交互。.<br/>
+
+#### frameHandle对象
+frameHandle对象为x.frame(param...); 方法的返回值。操作ifarme之间的消息通讯必须通过此对象才可实现。<br/>
+*frameHandle对象只有4个实例方法，没有静态方法。*
+
+###### on(eventName,callback);
+注册回调事件，以供目标window对象调用。
+`参数列表:`
+>+ @param eventName      {string} 方法名称
+>+ @param callback     {function} 回调函数
+
+###### emit(eventName,param);
+触发对方的回调事件。
+`参数列表:`
+>+ @param eventName      {string} 需要触发的方法名称
+>+ @param param     {object|string} 参数
+
+###### send(message);
+向对方发送消息。对方必须通过on方法注册`Message`事件才可收到通过此方法发送的消息。
+`参数列表:`
+>+ @param message      {string} 消息内容
+
+###### fire(eventName,[param1,param2...]]);
+触发本窗口注册的事件。
+`参数列表:`
+>+ @param eventName      {string} 方法名称
+>+ @param [param1,param2...]]     {array} 参数列表
+
+## 疑问?
+
+如果您有任何疑问，请随时提出通过 [New Issue](https://github.com/YataoZhang/xMan/issues/new).
+
+## License
+
+xMan.js在MIT的条款下提供 [MIT License](https://github.com/YataoZhang/xMan/blob/master/LICENSE).
