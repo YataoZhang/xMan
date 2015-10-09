@@ -323,7 +323,7 @@
         },
         stringify: function (obj) {
             var t = typeof obj;
-            var callee = this.stringify;
+            var callee = util.stringify;
             if (t !== 'object' || obj === null) {
                 if (t === 'string') {
                     obj = '"' + obj + '"';
