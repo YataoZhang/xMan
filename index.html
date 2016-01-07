@@ -288,7 +288,21 @@
 <a id="framehandle对象" class="anchor" href="#framehandle%E5%AF%B9%E8%B1%A1" aria-hidden="true"><span class="octicon octicon-link"></span></a>frameHandle对象</h4>
 
 <p>frameHandle对象为x.frame(param...); 方法的返回值。操作ifarme之间的消息通讯必须通过此对象才可实现。<br>
-<em>frameHandle对象只有4个实例方法，没有静态方法。</em></p>
+<em>frameHandle对象只有5个实例方法，没有静态方法。</em></p>
+
+<h6>
+<a id="settargettargetwindow" class="anchor" href="#settargettargetwindow" aria-hidden="true"><span class="octicon octicon-link"></span></a>setTarget(targetWindow);</h6>
+
+<p>用于延迟设置目标窗口,如果调用x.frame方法时不希望立即传入目标window对象则可使用该方法.</p>
+
+<p><code>参数列表:</code></p>
+
+<blockquote>
+<ul>
+<li>
+<a href="https://github.com/param" class="user-mention">@param</a> targetWindow      {object} 目标窗口对象</li>
+</ul>
+</blockquote>
 
 <h6>
 <a id="oneventname-callback" class="anchor" href="#oneventname-callback" aria-hidden="true"><span class="octicon octicon-link"></span></a>on(eventName, callback);</h6>
