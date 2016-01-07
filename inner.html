@@ -1,26 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title></title>
     <script src="src/XMan.js"></script>
     <script>
         var inner = x.frame(window.parent);
-        inner.on('triggerInner', function (data) {
+        inner.on('triggerInner', function(data) {
             console.log('[LOG triggerInner] type:frames,data: ' + JSON.stringify(data))
         });
-        inner.on('Message',function(data){
+        inner.on('Message', function(data) {
             console.log('[LOG Message Inner] type:frames,data: ' + JSON.stringify(data))
         });
 
-        setTimeout(function(){
-            inner.emit('triggerOuter', {from: 'inner'});
+        setTimeout(function() {
+            inner.emit('triggerOuter', {
+                from: 'inner'
+            });
             inner.send('this msg from inner');
-        },1000);
-
+        }, 1000);
     </script>
 </head>
-<body>
 
+<body>
 </body>
+
 </html>

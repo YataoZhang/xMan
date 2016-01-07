@@ -4,6 +4,10 @@
  * https://github.com/YataoZhang/xMan
  * Date: 2015/11/3
  */
+/**
+ * @file 跨域操作类库
+ * @description 供系统内部调用
+ */
 !function (entrance) {
     "use strict";
     if ("object" === typeof exports && "undefined" !== typeof module) {
@@ -21,25 +25,17 @@
     }
 }(function () {
     "use strict";
-    /**
-     * @file 跨域操作类库
-     * @description 供系统内部调用
-     */
 
-    var console = window.console || {
-            log: function () {
-            },
-            warn: function () {
-            },
-            info: function () {
-            }
-        };
     var isType = function (type) {
         return function (obj) {
             return Object.prototype.toString.call(obj) === '[object ' + type + ']';
         };
     };
-    var util = {
+    /**
+     * 帮助函数
+     * @type {{encodeObject2URIString: Function, stringify: Function, parseJSON: Function, bind: Function, hasSearch: Function, forIn: Function, each, init: Function, isPureObject: Function}}
+     */
+    var tool = {
         encodeObject2URIString: function (obj) {
             if (typeof obj === 'string') {
                 return obj;
@@ -55,7 +51,7 @@
         },
         stringify: function (obj) {
             var t = typeof obj;
-            var callee = util.stringify;
+            var callee = tool.stringify;
             if (t !== 'object' || obj === null) {
                 if (t === 'string') {
                     obj = '"' + obj + '"';
@@ -127,22 +123,13 @@
          */
 
         forIn: function (obj, callback) {
-            if (!util.isObject(obj)) {
+            if (!tool.isObject(obj)) {
                 return;
             }
             for (var n in obj) {
                 if (obj.hasOwnProperty(n)) {
                     callback.call(null, n, obj[n]);
                 }
-            }
-        },
-        // 遍历  不管对象还是数组都可以遍历
-        iteral: function (iteraler, callback) {
-            if (util.isArray(iteraler)) {
-                return util.each.apply(null, [iteraler, callback]);
-            }
-            if (util.isObject(iteraler)) {
-                return util.forIn.apply(null, arguments);
             }
         },
         each: (function () {
@@ -158,15 +145,19 @@
             };
         })(),
         init: function () {
-            util.each(['Object', 'String', 'Function', 'Array'], function (item) {
-                util['is' + item] = isType(item);
+            tool.each(['Object', 'String', 'Function', 'Array'], function (item) {
+                tool['is' + item] = isType(item);
             });
         },
         isPureObject: function (data) {
-            return !!(util.isObject(data) && data.constructor === Object);
+            return !!(tool.isObject(data) && data.constructor === Object);
         }
     };
-    util.init();
+    tool.init();
+    /**
+     * 跨域方法管理类
+     * @constructor
+     */
     var Manager = function () {
         this.obtainId = (function () {
             var id = 0;
@@ -191,11 +182,11 @@
                 }
             };
             var arr = '';
-            if (util.isObject(data)) {
-                arr = util.encodeObject2URIString(data);
+            if (tool.isObject(data)) {
+                arr = tool.encodeObject2URIString(data);
             }
             arr += arr.length > 0 ? '&' : '';
-            __script.src = util.hasSearch(url, arr + key + '=' + callbackName);
+            __script.src = tool.hasSearch(url, arr + key + '=' + callbackName);
             document.body.appendChild(__script);
         };
     };
@@ -213,25 +204,20 @@
             return null;
         })();
         return function (type, url, data, callback, conf) {
-            console.info('使用此方法必须服务器端配合.\n1:在响应头中加上Access-Control-Allow-Origin\n'
-                + '2:需要前端携带凭据的话,则后端必须加上Access-Control-Allow-Credentials:true\n3:'
-                + '如果需要自定义头信息则响应头必须加上Access-Control-Request-Headers和Access-Control-Allow-Headers'
-                + '\n详情请参考http://www.w3.org/TR/cors/');
             if (!supportCORS) {
-                console.warn('[WARN] 当前浏览器支持此功能,请常识其他方式进行跨域请求.');
                 return;
             }
-            if (util.isPureObject(data)) {
-                data = util.encodeObject2URIString(data);
+            if (tool.isPureObject(data)) {
+                data = tool.encodeObject2URIString(data);
             }
-            if (String(type).toLowerCase() === 'get' && util.isString(data) && data.length > 0) {
-                url = util.hasSearch(url, data);
+            if (String(type).toLowerCase() === 'get' && tool.isString(data) && data.length > 0) {
+                url = tool.hasSearch(url, data);
                 data = void 0;
             }
             conf = conf || {};
             var xhr = new supportCORS();
             xhr.open(type, url);
-            util.forIn(conf.headers, function (key, value) {
+            tool.forIn(conf.headers, function (key, value) {
                 xhr.setRequestHeader(key, value);
             });
             xhr.withCredentials = !!conf.withCredentials;
@@ -286,7 +272,7 @@
             form.action = url;
             that.queue[frameName] = callback;
             form.innerHTML = '';
-            util.forIn(data, function (key, value) {
+            tool.forIn(data, function (key, value) {
                 var input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = key;
@@ -296,6 +282,12 @@
             form.submit();
         };
     };
+
+    /**
+     * 子父窗口通讯
+     * @param target 目标窗口
+     * @constructor
+     */
     var FrameHandle = function (target) {
         this.target = target;
         this.frameHandle = getFrameHelper();
@@ -329,6 +321,9 @@
             this.frameHandle.dispatchEvent(name, params);
         }
     };
+    /**
+     * getFrameHelper
+     */
     var getFrameHelper = (function () {
         var conf = {
             DEBUG: false,
@@ -347,13 +342,10 @@
             return {
                 postMessage: function (message, targetWindow) {
                     if (typeof message === 'object') {
-                        message = util.stringify(message);
+                        message = tool.stringify(message);
                     }
                     if (typeof message !== 'string' || !targetWindow) {
                         this.dispatchEvent('Error', ['发送的信息格式出现问题']);
-                        if (conf.DEBUG) {
-                            console.log('[WARN] the message is not a string type or the target window is not exist.');
-                        }
                         return;
                     }
                     this.sendMessage(message, targetWindow);
@@ -369,10 +361,6 @@
                         delegate = this.eventDelegate;
                     }
                     if (typeof delegate['on' + e] === 'function') {
-                        if (delegate.DEBUG) {
-                            console.log('[LOG] call the delegate function `on' + e
-                                + '` of the obj:', delegate, ' successful');
-                        }
                         if (Object.prototype.toString.call(args) === '[object Array]'
                             || typeof args === 'object' && args.length) {
                             delegate['on' + e].apply(delegate, args);
@@ -380,10 +368,6 @@
                             delegate['on' + e].apply(delegate);
                         }
                         return delegate;
-                    }
-                    if (delegate.DEBUG) {
-                        console.log('[WARN] the delegate function `on' + e
-                            + '` of the crossDomainOuter is not a function');
                     }
                     return false;
                 },
@@ -398,9 +382,6 @@
                     }
                 },
                 sendMessage: function (message, targetWindow) {
-                    if (conf.DEBUG) {
-                        console.log('[LOG] will send message to innerWindow:', targetWindow, ', message is:', message);
-                    }
                     if (conf.supportPostMessage) {
                         targetWindow.postMessage(message, '*');
                     } else {
@@ -420,7 +401,7 @@
                     if (conf.supportPostMessage) {
                         this.bind(window, 'message', function (event) {
                             if (event.data) {
-                                var msg = util.parseJSON(event.data);
+                                var msg = tool.parseJSON(event.data);
                                 dispatchMsg(msg);
                             }
                         });
@@ -430,7 +411,7 @@
                         setInterval(function () {
                             if (window.name !== that.windowName && window.name !== '') {
                                 that.windowName = window.name;
-                                var msg = util.parseJSON(that.windowName);
+                                var msg = tool.parseJSON(that.windowName);
                                 dispatchMsg(msg);
                                 setTimeout(function () {
                                     window.name = '';
@@ -443,37 +424,56 @@
             };
         };
     })();
+
+    /**
+     * 集合仓库
+     * @constructor
+     */
     var Base = function () {
         var arg = arguments;
         this.manger = new Manager();
-        util.each(['Jsonp', 'CORS', 'Frame', 'FrameForm'], function (item) {
+        tool.each(['Jsonp', 'CORS', 'Frame', 'FrameForm'], function (item) {
             this[item] = this.manger['get' + item].apply(null, arg);
         }, this);
     };
-    var verify = function (obj) {
-        if (!(this instanceof  verify)) {
-            return new verify(obj);
+
+    /**
+     * 验证参数
+     * @param obj 参数配置项
+     * @returns {Verify}
+     * @constructor
+     */
+    var Verify = function (obj) {
+        if (!(this instanceof  Verify)) {
+            return new Verify(obj);
         }
         this.data = obj;
         this.queue = [];
     };
-    verify.prototype.pushVerify = function () {
+    Verify.prototype.pushVerify = function () {
         [].push.apply(this.queue, arguments);
         return this;
     };
-    verify.prototype.start = function () {
+    Verify.prototype.start = function () {
         var that = this;
-        util.each(this.queue, function (item) {
+        tool.each(this.queue, function (item) {
             if (!item.verify.call(that.data)) {
                 throw new Error('[VERIFY LOG] name: ' + item.name + '; ' + item.errorMsg || '验证出现错误,缺少失败原因');
             }
         });
     };
     var baseInstance = new Base();
+
+    /**
+     * 入口
+     * @param conf
+     * @returns {*}
+     */
     var entrance = function (conf) {
-        if (!util.isObject(conf))
-            return;
-        var DefaultSettions = {
+        if (!tool.isObject(conf)) {
+            throw new TypeError('参数不正确');
+        }
+        var options = {
             method: 'get',
             type: 'jsonp',
             data: {},
@@ -487,10 +487,10 @@
             targetWindow: window.frames[0] || window.top,
             cache: false
         };
-        util.forIn(DefaultSettions, function (key) {
-            DefaultSettions[key] = conf[key] || DefaultSettions[key];
+        tool.forIn(options, function (key) {
+            options[key] = conf[key] || options[key];
         });
-        verify(DefaultSettions).pushVerify({
+        Verify(options).pushVerify({
             name: '验证method',
             verify: function () {
                 if (/^(get|post)$/igm.test(this.method)) {
@@ -511,7 +511,7 @@
             name: '验证url',
             verify: function () {
                 if (this.method === 'get' && /(jsonp|crossDomain|formRequest)/.test(this.type)) {
-                    this.url = util.hasSearch(this.url, util.encodeObject2URIString(this.data));
+                    this.url = tool.hasSearch(this.url, tool.encodeObject2URIString(this.data));
                     this.data = void 0;
                 }
                 return true;
@@ -520,37 +520,37 @@
             name: '验证cache',
             verify: function () {
                 if (this.cache === false) {
-                    this.url = util.hasSearch(this.url, '_=' + parseInt(Math.random() * 0xffffff, 10));
+                    this.url = tool.hasSearch(this.url, '_=' + parseInt(Math.random() * 0xffffff, 10));
                 }
                 return true;
             }
         }).start();
-        switch (DefaultSettions.type) {
+        switch (options.type.toLowerCase()) {
             case 'jsonp':
-                return baseInstance.Jsonp(DefaultSettions.url,
-                    DefaultSettions.data,
-                    DefaultSettions.callbackName,
-                    DefaultSettions.success);
-            case 'crossDomain':
-                return baseInstance.CORS(DefaultSettions.method,
-                    DefaultSettions.url,
-                    DefaultSettions.data,
-                    DefaultSettions.success,
+                return baseInstance.Jsonp(options.url,
+                    options.data,
+                    options.callbackName,
+                    options.success);
+            case 'crossdomain':
+                return baseInstance.CORS(options.method,
+                    options.url,
+                    options.data,
+                    options.success,
                     {
-                        headers: DefaultSettions.headers,
-                        withCredentials: DefaultSettions.withCredentials
+                        headers: options.headers,
+                        withCredentials: options.withCredentials
                     });
             case  'frame':
-                return baseInstance.Frame(DefaultSettions.targetWindow);
-            case  'formRequest':
-                return baseInstance.FrameForm(DefaultSettions.method,
-                    DefaultSettions.url,
-                    DefaultSettions.data,
-                    DefaultSettions.success,
-                    DefaultSettions.contentType);
+                return baseInstance.Frame(options.targetWindow);
+            case  'formrequest':
+                return baseInstance.FrameForm(options.method,
+                    options.url,
+                    options.data,
+                    options.success,
+                    options.contentType);
         }
     };
-    util.forIn({
+    tool.forIn({
         jsonp: 'Jsonp',
         crossDomain: 'CORS',
         frame: 'Frame',
