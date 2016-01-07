@@ -6,20 +6,24 @@
     <title></title>
     <script src="src/XMan.js"></script>
     <script>
-        var inner = x.frame(window.parent);
-        inner.on('triggerInner', function(data) {
-            console.log('[LOG triggerInner] type:frames,data: ' + JSON.stringify(data))
-        });
-        inner.on('Message', function(data) {
-            console.log('[LOG Message Inner] type:frames,data: ' + JSON.stringify(data))
-        });
-
-        setTimeout(function() {
-            inner.emit('triggerOuter', {
-                from: 'inner'
+        var inner = x.frame();
+        window.onload = function () {
+            inner.setTarget(window.parent);
+            inner.on('triggerInner', function (data) {
+                console.log('[LOG triggerInner] type:frames,data: ' + JSON.stringify(data))
             });
-            inner.send('this msg from inner');
-        }, 1000);
+            inner.on('Message', function (data) {
+                console.log('[LOG Message Inner] type:frames,data: ' + JSON.stringify(data))
+            });
+            setTimeout(function () {
+                inner.emit('triggerOuter', {
+                    from: 'inner'
+                });
+                inner.send('this msg from inner');
+            }, 1000);
+        }
+
+
     </script>
 </head>
 

@@ -11,7 +11,6 @@
             x.jsonp('http://localhost:3000/jsonp', {type: 'jsonp'}, 'cb', function (data) {
                 console.log('[LOG] type:jsonp1,data: ' + JSON.stringify(data));
             });
-
             // jsonp用法二
             x({
                 method: 'get',
@@ -23,12 +22,10 @@
                     console.log('[LOG] type:jsonp2,data: ' + JSON.stringify(data));
                 }
             });
-
             // 跨域资源共享用法一
             x.crossDomain('post', 'http://localhost:3000/cors', {type: 'cors'}, function (data) {
                 console.log('[LOG] type:cors1,data: ' + JSON.stringify(data));
             });
-
             // 跨域资源共享用法二
             x({
                 method: 'post',
@@ -41,12 +38,10 @@
                 withCredentials: true,
                 headers: {'mySelf': 'byMyself'}
             });
-
             // form request用法一
             x.formRequest('post', 'http://localhost:3000/form', {type: 'form'}, function (data) {
                 console.log('[LOG] type:form1,data: ' + JSON.stringify(data));
             });
-
             // form request用法二
             x({
                 method: 'post',
@@ -57,7 +52,6 @@
                     console.log('[LOG] type:form2,data: ' + JSON.stringify(data));
                 }
             });
-
             // iframe 跨域 通讯 用法一
             var outer = x.frame(window.frames[0]);
             outer.on('triggerOuter', function (data) {

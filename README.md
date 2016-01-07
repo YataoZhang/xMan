@@ -227,7 +227,13 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 
 #### frameHandle对象
 frameHandle对象为x.frame(param...); 方法的返回值。操作ifarme之间的消息通讯必须通过此对象才可实现。<br/>
-*frameHandle对象只有4个实例方法，没有静态方法。*
+*frameHandle对象只有5个实例方法，没有静态方法。*
+
+###### setTarget(targetWindow);
+用于延迟设置目标窗口,如果调用x.frame方法是不希望传入目标window对象.可是使用改方法.
+
+`参数列表:`
+>+ @param targetWindow      {oject} 目标窗口对象
 
 ###### on(eventName, callback);
 注册回调事件，以供目标window对象调用。
