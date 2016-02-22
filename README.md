@@ -103,7 +103,7 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 
 `注意:`<br/>
 1: 此方法只能为`GET`方法.<br/>
-2: 此方法请求数据有大小限制.(chrome为8k,firefox为7k,ie为2k)<br/>
+2: 此方法请求数据有大小限制.(chrome为8k,firefox为7k,ie为2k),所以传输的数据量过大可能造成数据不完整.<br/>
 3: 此方法的兼容性为IE6+以及所有主流浏览器.<br/>
 
 #### 2) crossDomain(type, url, data, callback, settings);
@@ -186,6 +186,7 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 1: 此方法可使用`GET`或`POST`方法.<br/>
 2: 此方法可以默认为携带cookie<br/>
 3: 此方法的兼容性为IE6+以及所有主流浏览器.<br/>
+4: 此方法对传输的内容没有大小限制.所以当传输数据量过大时,可替代jsonp来使用.<br/>
 
 #### 4) frame(targetWindow);
 跨iframe交互使用，此方法返回的是一个frameHandle对象
