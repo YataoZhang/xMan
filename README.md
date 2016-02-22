@@ -40,21 +40,26 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 
 ### xMan如何使用
 
+##### 须知:本实例的静态资源统一通过http://localhost:63342访问.跨域接口统一通过http://cross.domain.com:3000访问
+
+*为了模拟跨域场景,需提前配置host.这里暂时将本机的host配置为`cross.domain.com`*
+
 该类库提供的方法皆为异步方法.使用时可直接用x.方法名(parma[...]).使用该方法.如下:
 
 ```js
 
   // 本事例仅做演示.
+  // 以下实例均可在index.html中找到
     
-  x.jsonp('http://localhost:3000/jsonp', {type: 'jsonp'}, 'cb', function (data) {
+  x.jsonp('http://cross.domain.com:3000/jsonp', {type: 'jsonp'}, 'cb', function (data) {
       console.log('[LOG] type:jsonp,data: ' + JSON.stringify(data));
   });
 
-  x.crossDomain('post', 'http://localhost:3000/cors', {type: 'cors'}, function (data) {
+  x.crossDomain('post', 'http://cross.domain.com:3000/cors', {type: 'cors'}, function (data) {
       console.log('[LOG] type:cors,data: ' + JSON.stringify(data));
   });
 
-  x.formRequest('post', 'http://localhost:3000/form', {type: 'form'}, function (data) {
+  x.formRequest('post', 'http://cross.domain.com:3000/form', {type: 'form'}, function (data) {
       console.log('[LOG] type:form,data: ' + JSON.stringify(data));
   });
 
@@ -90,7 +95,7 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 
 ```js
 
- x.jsonp('http://localhost:3000/jsonp', {type: 'jsonp'}, 'cb', function (data) {
+ x.jsonp('http://cross.domain.com:3000/jsonp', {type: 'jsonp'}, 'cb', function (data) {
      console.log('[LOG] type:jsonp,data: ' + JSON.stringify(data));
  });
     
@@ -120,7 +125,7 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 
  // 前端代码
  // 服务器制定头信息为 myself:byMyself
- x.crossDomain('post', 'http://localhost:3000/cors', {type: 'cors'}, function (data) {
+ x.crossDomain('post', 'http://cross.domain.com:3000/cors', {type: 'cors'}, function (data) {
       console.log('[LOG] type:cors,data: ' + JSON.stringify(data));
  },{withCredentials:true,headers{'myself':'byMyself'}});
  
@@ -159,7 +164,7 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 ```js
 
  // 前端代码
-  x.formRequest('post', 'http://localhost:3000/form', {type: 'form'}, function (data) {
+  x.formRequest('post', 'http://cross.domain.com:3000/form', {type: 'form'}, function (data) {
        console.log('[LOG] type:form,data: ' + JSON.stringify(data));
   },'application/x-www-form-urlencoded');
  
@@ -191,7 +196,7 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
 
 ```js
 
- // 外部窗口代码，假设外部窗口的URI为 http://localhost:63342
+ // 外部窗口代码，假设外部窗口的URI为 http://localhost:63342/index.html
   var outer = x.frame(window.frames[0]);
   outer.on('triggerOuter', function (data) {
       console.log('[LOG triggerOuter] type:frames,data: ' + JSON.stringify(data))
@@ -205,7 +210,7 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
       outer.send('this msg from outer');
   }, 500);
  
- // 内部窗口代码，假设内部窗口的URI为 http://localhost:3000
+ // 内部窗口代码，假设内部窗口的URI为 http://cross.domain.com:3000/inner.html
    var inner = x.frame(window.parent);
   inner.on('triggerInner', function (data) {
       console.log('[LOG triggerInner] type:frames,data: ' + JSON.stringify(data))

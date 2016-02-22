@@ -5,16 +5,17 @@
     <title></title>
     <script src="src/XMan.js"></script>
     <script>
+        // 请提前配置host本机127.0.0.1为cross.domain.com
+        // 当前页面是通过http://localhost:63342/index.html访问
         window.onload = function () {
-            // 当前页面是http://localhost:63342
             // jsonp用法一
-            x.jsonp('http://localhost:3000/jsonp', {type: 'jsonp'}, 'cb', function (data) {
+            x.jsonp('http://cross.domain.com:3000/jsonp', {type: 'jsonp'}, 'cb', function (data) {
                 console.log('[LOG] type:jsonp1,data: ' + JSON.stringify(data));
             });
             // jsonp用法二
             x({
                 method: 'get',
-                url: 'http://localhost:3000/jsonp',
+                url: 'http://cross.domain.com:3000/jsonp',
                 type: 'jsonp',
                 data: {type: 'jsonp'},
                 callbackName: 'cb',
@@ -23,14 +24,14 @@
                 }
             });
             // 跨域资源共享用法一
-            x.crossDomain('post', 'http://localhost:3000/cors', {type: 'cors'}, function (data) {
+            x.crossDomain('post', 'http://cross.domain.com:3000/cors', {type: 'cors'}, function (data) {
                 console.log('[LOG] type:cors1,data: ' + JSON.stringify(data));
             });
             // 跨域资源共享用法二
             x({
                 method: 'post',
                 type: 'crossDomain',
-                url: 'http://localhost:3000/cors',
+                url: 'http://cross.domain.com:3000/cors',
                 data: {type: 'cors'},
                 success: function (data) {
                     console.log('[LOG] type:cors2,data: ' + JSON.stringify(data));
@@ -39,14 +40,14 @@
                 headers: {'mySelf': 'byMyself'}
             });
             // form request用法一
-            x.formRequest('post', 'http://localhost:3000/form', {type: 'form'}, function (data) {
+            x.formRequest('post', 'http://cross.domain.com:3000/form', {type: 'form'}, function (data) {
                 console.log('[LOG] type:form1,data: ' + JSON.stringify(data));
             });
             // form request用法二
             x({
                 method: 'post',
                 type: 'formRequest',
-                url: 'http://localhost:3000/form',
+                url: 'http://cross.domain.com:3000/form',
                 data: {type: 'form'},
                 success: function (data) {
                     console.log('[LOG] type:form2,data: ' + JSON.stringify(data));
@@ -85,6 +86,6 @@
     </script>
 </head>
 <body>
-<iframe src="http://localhost:3000/inner.html"></iframe>
+<iframe src="http://cross.domain.com:3000/inner.html"></iframe>
 </body>
 </html>
