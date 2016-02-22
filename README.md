@@ -171,7 +171,8 @@ xMan在生成是先行检测并依附于全局环境中的`exports`和`module`,�
  // server代码(仅以nodejs为例)
   var content = 'server数据' 
   var header = {
-       'content-type': 'text/html',
+       // 这里一定要设置content-type为text/html否则获取返回数据有可能失效
+       'content-type': 'text/html; chatset=utf-8',
        'set-cookie': cookie
   };
   response.writeHead(200, header);
