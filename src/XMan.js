@@ -25,7 +25,6 @@
     }
 }(function () {
     "use strict";
-
     var isType = function (type) {
         return function (obj) {
             return Object.prototype.toString.call(obj) === '[object ' + type + ']';
@@ -33,7 +32,6 @@
     };
     /**
      * 帮助函数
-     * @type {{encodeObject2URIString: Function, stringify: Function, parseJSON: Function, bind: Function, hasSearch: Function, forIn: Function, each, init: Function, isPureObject: Function}}
      */
     var tool = {
         encodeObject2URIString: function (obj) {
@@ -239,11 +237,11 @@
             iframe = document.createElement('<iframe name=\'' + frameName + '\'>');
         } catch (ex) {
             iframe = document.createElement('iframe');
+            iframe.name = frameName;
         }
-        iframe.name = frameName;
         iframe.style.display = 'none';
         document.body.appendChild(iframe);
-        iframe.onload = function () {
+        var cb = function () {
             var cb = that.queue[iframe.name];
             if (cb) {
                 try {
@@ -254,6 +252,11 @@
                 }
             }
         };
+        if (window.attachEvent) {
+            iframe.attachEvent('onload', cb);
+        } else {
+            iframe.addEventListener('load', cb, false);
+        }
     };
     Manager.prototype.getFrameForm = function () {
         var form = null;
@@ -262,6 +265,7 @@
         return function (type, url, data, callback, enctype) {
             if (form === null) {
                 form = document.createElement('form');
+                form.style.display = 'none';
                 document.body.appendChild(form);
             }
             var frameName = that.obtainId();
@@ -272,17 +276,18 @@
             form.action = url;
             that.queue[frameName] = callback;
             form.innerHTML = '';
+            var frage = document.createDocumentFragment();
             tool.forIn(data, function (key, value) {
                 var input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = key;
                 input.value = value;
-                form.appendChild(input);
+                frage.appendChild(input);
             });
+            form.appendChild(frage);
             form.submit();
         };
     };
-
     /**
      * 子父窗口通讯
      * @param target 目标窗口
@@ -424,19 +429,16 @@
             };
         };
     })();
-
     /**
      * 集合仓库
      * @constructor
      */
     var Base = function () {
-        var arg = arguments;
         this.manger = new Manager();
         tool.each(['Jsonp', 'CORS', 'Frame', 'FrameForm'], function (item) {
-            this[item] = this.manger['get' + item].apply(null, arg);
+            this[item] = this.manger['get' + item]();
         }, this);
     };
-
     /**
      * 验证参数
      * @param obj 参数配置项
@@ -463,7 +465,6 @@
         });
     };
     var baseInstance = new Base();
-
     /**
      * 入口
      * @param conf
